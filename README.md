@@ -146,3 +146,28 @@ docker compose up -d
 
 - **정도원** — 한일네트웍스 웹서비스파트 PM
 - 구축일: 2026-05-07
+
+---
+
+## 환경변수 설정 확인 방법
+
+설정 후 **새 PowerShell** 열고 아래 명령어 실행:
+
+```powershell
+echo $env:CLAUDE_CODE_ENABLE_TELEMETRY
+echo $env:OTEL_LOGS_EXPORTER
+echo $env:OTEL_EXPORTER_OTLP_ENDPOINT
+echo $env:OTEL_LOG_USER_PROMPTS
+```
+
+### 정상 출력 예시
+
+```
+1
+otlp
+http://192.168.50.170:4328
+1
+```
+
+4개 값이 모두 출력되면 설정 완료입니다.  
+이후 `claude` 실행 시 자동으로 PM PC로 수집됩니다.
