@@ -82,3 +82,20 @@ claude
 ## 문의
 
 설정 관련 문의: 웹서비스파트 정도원 대리
+
+---
+
+## 환경변수 삭제 방법
+
+수집 중단이 필요할 때 PowerShell에서 실행:
+
+```powershell
+[System.Environment]::SetEnvironmentVariable("CLAUDE_CODE_ENABLE_TELEMETRY", $null, "User")
+[System.Environment]::SetEnvironmentVariable("OTEL_METRICS_EXPORTER", $null, "User")
+[System.Environment]::SetEnvironmentVariable("OTEL_LOGS_EXPORTER", $null, "User")
+[System.Environment]::SetEnvironmentVariable("OTEL_EXPORTER_OTLP_PROTOCOL", $null, "User")
+[System.Environment]::SetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT", $null, "User")
+[System.Environment]::SetEnvironmentVariable("OTEL_LOG_USER_PROMPTS", $null, "User")
+```
+
+실행 후 **새 PowerShell** 열면 완전 삭제됩니다.
