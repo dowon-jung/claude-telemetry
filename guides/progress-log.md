@@ -136,3 +136,38 @@ OTEL_EXPORTER_OTLP_ENDPOINT = http://192.168.50.170:4328
 1. 팀원 환경변수 IP `192.168.50.170`으로 재설정 후 배포
 2. Kibana 대시보드 구성 (사용자별 비용, 모델별 사용량)
 3. Alert 설정 (위험 명령 탐지)
+
+---
+
+## 2026-05-07 최종 마무리
+
+### 🎉 전체 구축 완료
+
+| 항목 | 결과 |
+|---|---|
+| OTEL 데이터 수신 | ✅ |
+| ElasticSearch 저장 | ✅ |
+| Kibana 조회 | ✅ |
+| 프롬프트 전문 수집 | ✅ (OTEL_LOG_USER_PROMPTS=1) |
+| 팀원 데이터 수집 | ✅ (jyt@hanilnetworks.com 확인) |
+| 팀원 가이드 문서 | ✅ |
+
+### 팀원 수집 확인
+- **정연태님** (`jyt@hanilnetworks.com`) PyCharm 터미널에서 정상 수집 확인
+- 프롬프트 전문 `"나 정연태다"` Kibana에서 조회 성공
+
+### 최종 환경변수 목록 (팀원 공통)
+
+```
+CLAUDE_CODE_ENABLE_TELEMETRY = 1
+OTEL_METRICS_EXPORTER = otlp
+OTEL_LOGS_EXPORTER = otlp
+OTEL_EXPORTER_OTLP_PROTOCOL = http/protobuf
+OTEL_EXPORTER_OTLP_ENDPOINT = http://192.168.50.170:4328
+OTEL_LOG_USER_PROMPTS = 1
+```
+
+### 다음 할 일
+- Kibana 대시보드 구성 (사용자별 프롬프트, 토큰/비용 시각화)
+- 전체 팀원 배포
+- Alert 설정 (위험 명령 탐지)
