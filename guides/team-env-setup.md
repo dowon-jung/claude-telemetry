@@ -6,7 +6,7 @@ Claude Code 사용 내역이 수집 서버(PM PC)로 전송됩니다.
 아래 설정을 완료해야 로그 수집이 시작됩니다.
 
 > ⚠️ **본 설정은 업무 보안 감사 목적으로 운영됩니다.**  
-> Claude Code 사용 시 프롬프트 및 응답이 로그로 기록됩니다.  
+> Claude Code 사용 시 프롬프트 및 사용 내역이 기록됩니다.  
 > 수집 데이터는 PM / 보안담당자만 열람 가능합니다.
 
 ---
@@ -31,6 +31,7 @@ PowerShell 열고 아래 명령어 한번에 붙여넣기:
 [System.Environment]::SetEnvironmentVariable("OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf", "User")
 [System.Environment]::SetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT", "http://192.168.50.170:4328", "User")
 [System.Environment]::SetEnvironmentVariable("OTEL_LOG_USER_PROMPTS", "1", "User")
+[System.Environment]::SetEnvironmentVariable("OTEL_LOG_TOOL_DETAILS", "1", "User")
 ```
 
 ---
@@ -43,6 +44,7 @@ PowerShell **새 창** 열고:
 echo $env:CLAUDE_CODE_ENABLE_TELEMETRY
 echo $env:OTEL_EXPORTER_OTLP_ENDPOINT
 echo $env:OTEL_LOG_USER_PROMPTS
+echo $env:OTEL_LOG_TOOL_DETAILS
 ```
 
 결과:
@@ -50,9 +52,10 @@ echo $env:OTEL_LOG_USER_PROMPTS
 1
 http://192.168.50.170:4328
 1
+1
 ```
 
-세 값 모두 출력되면 완료입니다.
+4개 값 모두 출력되면 완료입니다.
 
 ---
 
@@ -76,12 +79,8 @@ claude
 | 세션 ID | 세션 식별자 |
 | 이메일 | 사용자 계정 |
 | 시간 | 요청 시각 |
-
----
-
-## 문의
-
-설정 관련 문의: 웹서비스파트 정도원 대리
+| Bash 명령어 | 실행한 명령 (OTEL_LOG_TOOL_DETAILS=1) |
+| MCP 서버명/툴명 | MCP 사용 내역 (OTEL_LOG_TOOL_DETAILS=1) |
 
 ---
 
@@ -96,6 +95,7 @@ claude
 [System.Environment]::SetEnvironmentVariable("OTEL_EXPORTER_OTLP_PROTOCOL", $null, "User")
 [System.Environment]::SetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT", $null, "User")
 [System.Environment]::SetEnvironmentVariable("OTEL_LOG_USER_PROMPTS", $null, "User")
+[System.Environment]::SetEnvironmentVariable("OTEL_LOG_TOOL_DETAILS", $null, "User")
 ```
 
 실행 후 **새 PowerShell** 열면 완전 삭제됩니다.
@@ -104,7 +104,7 @@ claude
 
 ## IDE 터미널에서 임시 설정 (IntelliJ / PyCharm)
 
-IDE 터미널은 시스템 환경변수가 적용 안 될 수 있어요.  
+IDE 터미널은 시스템 환경변수가 적용 안 될 수 있습니다.  
 아래 명령어를 터미널에 붙여넣고 같은 창에서 `claude` 실행하세요.
 
 ```powershell
@@ -114,8 +114,15 @@ $env:OTEL_LOGS_EXPORTER = "otlp"
 $env:OTEL_EXPORTER_OTLP_PROTOCOL = "http/protobuf"
 $env:OTEL_EXPORTER_OTLP_ENDPOINT = "http://192.168.50.170:4328"
 $env:OTEL_LOG_USER_PROMPTS = "1"
+$env:OTEL_LOG_TOOL_DETAILS = "1"
 claude
 ```
 
 > ⚠️ 터미널 창을 닫으면 초기화됩니다. IDE 재시작 시 매번 실행 필요.  
 > 영구 적용은 위의 시스템 환경변수 설정 방법을 사용하세요.
+
+---
+
+## 문의
+
+설정 관련 문의: 웹서비스파트 정도원 대리
