@@ -23,7 +23,7 @@ services:
       - elasticsearch
 
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
+    image: docker.elastic.co/elastic-agent/elastic-otel-collector:0.9.0
     container_name: otel-collector
     command: ["--config=/etc/otel-config.yaml"]
     volumes:

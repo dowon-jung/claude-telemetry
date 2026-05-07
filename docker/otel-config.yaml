@@ -9,24 +9,23 @@ receivers:
 processors:
   batch:
     timeout: 5s
+  transform/route:
+    log_statements:
+      - context: log
+        conditions:
+          - resource.attributes["service.name"] == "claude-code"
+        statements:
+          - set(resource.attributes["data_stream.dataset"], "claude_code")
 
 exporters:
   debug:
     verbosity: detailed
   elasticsearch:
     endpoints: ["http://elasticsearch:9200"]
-    logs_index: claude-telemetry
-    traces_index: claude-telemetry
-    mapping:
-      mode: otel
 
 service:
   pipelines:
-    traces:
-      receivers: [otlp]
-      processors: [batch]
-      exporters: [debug, elasticsearch]
     logs:
       receivers: [otlp]
-      processors: [batch]
+      processors: [batch, transform/route]
       exporters: [debug, elasticsearch]
