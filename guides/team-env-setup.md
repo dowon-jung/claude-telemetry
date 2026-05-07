@@ -99,3 +99,23 @@ claude
 ```
 
 실행 후 **새 PowerShell** 열면 완전 삭제됩니다.
+
+---
+
+## IDE 터미널에서 임시 설정 (IntelliJ / PyCharm)
+
+IDE 터미널은 시스템 환경변수가 적용 안 될 수 있어요.  
+아래 명령어를 터미널에 붙여넣고 같은 창에서 `claude` 실행하세요.
+
+```powershell
+$env:CLAUDE_CODE_ENABLE_TELEMETRY = "1"
+$env:OTEL_METRICS_EXPORTER = "otlp"
+$env:OTEL_LOGS_EXPORTER = "otlp"
+$env:OTEL_EXPORTER_OTLP_PROTOCOL = "http/protobuf"
+$env:OTEL_EXPORTER_OTLP_ENDPOINT = "http://192.168.50.170:4328"
+$env:OTEL_LOG_USER_PROMPTS = "1"
+claude
+```
+
+> ⚠️ 터미널 창을 닫으면 초기화됩니다. IDE 재시작 시 매번 실행 필요.  
+> 영구 적용은 위의 시스템 환경변수 설정 방법을 사용하세요.
