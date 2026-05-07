@@ -17,8 +17,6 @@ exporters:
     endpoints: ["http://elasticsearch:9200"]
     logs_index: claude-telemetry
     traces_index: claude-telemetry
-    mapping:
-      mode: ecs
 
 service:
   pipelines:
