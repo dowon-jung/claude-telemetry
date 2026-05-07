@@ -78,25 +78,12 @@ def send_slack_alert(hits):
     messages = []
     for hit in hits:
         src = hit.get("_source", {})
-
-        # EDOT Collector는 Attributes 하위 필드를 중첩 구조로 저장
         attrs = src.get("Attributes", {})
-        email = attrs.get("user.email") or attrs.get("user", {}).get("email", "unknown")
-        prompt = attrs.get("prompt.value") or attrs.get("prompt", {}).get("value", "")
+
+        # 중첩 구조로 저장됨
+        email = attrs.get("user", {}).get("email", "unknown")
+        prompt = attrs.get("prompt", {}).get("value", "")
         timestamp = src.get("@timestamp", "")
-
-        # 필드가 없으면 전체 소스에서 찾기
-        if email == "unknown":
-            for k, v in src.items():
-                if "email" in k.lower():
-                    email = v
-                    break
-        if not prompt:
-            for k, v in src.items():
-                if "prompt" in k.lower() and "value" in k.lower():
-                    prompt = v
-                    break
-
         matched = [kw for kw in DANGEROUS_KEYWORDS if kw.lower() in str(prompt).lower()]
 
         messages.append(
