@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """
 Claude Code 위험 키워드 탐지 → 슬랙 알림 스크립트
-실행: python slack_alert.py
-주기 실행: Windows 작업 스케줄러에 등록 권장 (5분마다)
 """
 
 import json
@@ -47,8 +45,7 @@ def search_dangerous_prompts():
                 "minimum_should_match": 1
             }
         },
-        "size": 10,
-        "_source": ["Attributes.user.email", "Attributes.prompt.value", "@timestamp"]
+        "size": 10
     }
 
     url = f"{ES_URL}/logs-generic-default/_search"
@@ -81,16 +78,32 @@ def send_slack_alert(hits):
     messages = []
     for hit in hits:
         src = hit.get("_source", {})
-        email = src.get("Attributes.user.email", "unknown")
-        prompt = src.get("Attributes.prompt.value", "")
+
+        # EDOT Collector는 Attributes 하위 필드를 중첩 구조로 저장
+        attrs = src.get("Attributes", {})
+        email = attrs.get("user.email") or attrs.get("user", {}).get("email", "unknown")
+        prompt = attrs.get("prompt.value") or attrs.get("prompt", {}).get("value", "")
         timestamp = src.get("@timestamp", "")
-        matched = [kw for kw in DANGEROUS_KEYWORDS if kw.lower() in prompt.lower()]
+
+        # 필드가 없으면 전체 소스에서 찾기
+        if email == "unknown":
+            for k, v in src.items():
+                if "email" in k.lower():
+                    email = v
+                    break
+        if not prompt:
+            for k, v in src.items():
+                if "prompt" in k.lower() and "value" in k.lower():
+                    prompt = v
+                    break
+
+        matched = [kw for kw in DANGEROUS_KEYWORDS if kw.lower() in str(prompt).lower()]
 
         messages.append(
             f"• *{email}*\n"
             f"  시각: {timestamp}\n"
             f"  키워드: `{'`, `'.join(matched)}`\n"
-            f"  프롬프트: {prompt[:100]}{'...' if len(prompt) > 100 else ''}"
+            f"  프롬프트: {str(prompt)[:200]}{'...' if len(str(prompt)) > 200 else ''}"
         )
 
     text = (
