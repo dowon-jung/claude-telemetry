@@ -17,11 +17,8 @@ exporters:
     endpoints: ["http://elasticsearch:9200"]
     logs_index: claude-telemetry
     traces_index: claude-telemetry
-    flush:
-      bytes: 1048576
-    retry:
-      enabled: true
-      max_requests: 3
+    mapping:
+      mode: raw
 
 service:
   pipelines:
