@@ -214,3 +214,52 @@ exporters:
 - [Elastic Security Labs - Claude Code Monitoring](https://www.elastic.co/security-labs/claude-code-cowork-monitoring-otel-elastic)
 - [OTLP 스펙](https://opentelemetry.io/docs/specs/otlp/)
 
+
+---
+
+## 11. MCP 서버 모니터링
+
+### mcp_server_connection 이벤트 지원 여부
+
+**현재 미지원** — MCP 서버 연결/해제 라이프사이클 이벤트는 없다.
+
+MCP 관련 정보는 `tool_result` 이벤트에서만 확인 가능하다.
+
+### MCP 정보 수집 방법
+
+```powershell
+# 환경변수 추가
+[System.Environment]::SetEnvironmentVariable("OTEL_LOG_TOOL_DETAILS", "1", "User")
+```
+
+설정 후 `tool_result` 이벤트에서 아래 필드가 포함됨:
+
+| 필드 | 설명 |
+|---|---|
+| `mcp_server_name` | 연결된 MCP 서버 이름 |
+| `mcp_tool_name` | 호출된 MCP 툴 이름 |
+| `tool_parameters` | 툴 입력 파라미터 (JSON) |
+| `success` | 실행 성공 여부 |
+| `duration_ms` | 실행 시간 |
+
+### Kibana에서 MCP 쿼리 예시
+
+```
+Attributes.event.name : "tool_result" AND Attributes.mcp_server_name : *
+```
+
+특정 MCP 서버만 필터:
+```
+Attributes.mcp_server_name : "slack"
+```
+
+### 보안 관점에서 MCP 모니터링이 중요한 이유
+
+MCP 서버는 Claude Code에 외부 시스템 접근 권한을 부여한다.  
+Slack, Jira, DB, 내부 API 등에 연결되므로, 어떤 툴이 어떤 작업을 했는지 추적이 필요하다.
+
+예시 탐지 시나리오:
+- Slack MCP로 외부 메시지 전송
+- DB MCP로 대량 데이터 조회
+- 파일 시스템 MCP로 민감 파일 접근
+
