@@ -18,7 +18,7 @@ exporters:
     logs_index: claude-telemetry
     traces_index: claude-telemetry
     mapping:
-      mode: raw
+      mode: otel
 
 service:
   pipelines:
