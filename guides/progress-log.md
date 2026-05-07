@@ -171,3 +171,47 @@ OTEL_LOG_USER_PROMPTS = 1
 - Kibana 대시보드 구성 (사용자별 프롬프트, 토큰/비용 시각화)
 - 전체 팀원 배포
 - Alert 설정 (위험 명령 탐지)
+
+---
+
+## 2026-05-07 2차 작업 (오후)
+
+### 완료 ✅
+
+| 항목 | 내용 |
+|---|---|
+| Kibana 프롬프트 타임라인 | Discover 저장 검색 → 대시보드 패널 추가 |
+| 프롬프트 전문 수집 | OTEL_LOG_USER_PROMPTS=1 적용 확인 |
+| 팀원 추가 배포 | 정연태님(jyt@hanilnetworks.com) 수집 확인 |
+| restart: always 설정 | PM PC 재부팅 시 컨테이너 자동 시작 |
+| README 포트폴리오 정리 | 시작 이유 / 아키텍처 / 트러블슈팅 / 효과 |
+| 원리 및 플로우 문서 | guides/architecture.md 작성 |
+| 슬랙 Alert 스크립트 | alert/slack_alert.py 작성 및 동작 확인 |
+| Kibana Alert Rule | 위험 키워드 탐지 룰 설정 (Gold 라이선스 제한) |
+| 슬랙 Webhook 연동 | Claude Alert 앱 생성, #hanilnetworks-전체 채널 연동 |
+
+### 슬랙 Alert 동작 확인
+- 위험 키워드 (`password` 등) 프롬프트 탐지 시 슬랙 알림 전송 성공
+- 현재 필드 파싱 수정 중 (이메일/프롬프트 정상 출력 작업)
+
+### 슬랙 Alert 실행 방법
+```powershell
+$env:SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/..."
+python alert\slack_alert.py
+```
+
+### 자동화 예정
+- Windows 작업 스케줄러로 5분마다 자동 실행 등록 필요
+
+### 수집 범위 정리
+| 클라이언트 | 수집 여부 |
+|---|---|
+| 터미널 claude (CLI) | ✅ |
+| Claude Code 데스크탑 앱 | ❌ |
+| claude.ai 웹 | ❌ |
+
+### 다음 할 일
+- 슬랙 Alert 필드 파싱 최종 확인
+- Windows 작업 스케줄러 등록
+- Kibana 대시보드 나머지 패널 (비용/모델/토큰)
+- 전체 팀원 배포 완료
