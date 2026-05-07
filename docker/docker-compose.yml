@@ -3,6 +3,7 @@ services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.16.0
     container_name: elasticsearch
+    restart: always
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
@@ -15,6 +16,7 @@ services:
   kibana:
     image: docker.elastic.co/kibana/kibana:8.16.0
     container_name: kibana
+    restart: always
     ports:
       - "5602:5601"
     environment:
@@ -25,6 +27,7 @@ services:
   otel-collector:
     image: docker.elastic.co/elastic-agent/elastic-agent:8.16.0
     container_name: otel-collector
+    restart: always
     environment:
       - ELASTIC_AGENT_OTEL=true
     command: ["--config=/etc/otel-config.yaml"]
