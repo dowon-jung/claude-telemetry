@@ -91,6 +91,7 @@ docker compose up -d
 [System.Environment]::SetEnvironmentVariable("OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf", "User")
 [System.Environment]::SetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT", "http://192.168.50.170:4328", "User")
 [System.Environment]::SetEnvironmentVariable("OTEL_LOG_USER_PROMPTS", "1", "User")
+[System.Environment]::SetEnvironmentVariable("OTEL_LOG_TOOL_DETAILS", "1", "User")
 ```
 
 ### 3. 설정 확인
@@ -100,6 +101,7 @@ echo $env:CLAUDE_CODE_ENABLE_TELEMETRY   # 1
 echo $env:OTEL_LOGS_EXPORTER             # otlp
 echo $env:OTEL_EXPORTER_OTLP_ENDPOINT   # http://192.168.50.170:4328
 echo $env:OTEL_LOG_USER_PROMPTS         # 1
+echo $env:OTEL_LOG_TOOL_DETAILS         # 1
 ```
 
 ### 4. Kibana 접속
@@ -190,6 +192,7 @@ claude-telemetry/
 └── guides/
     ├── team-env-setup.md              # 팀원 환경변수 설정 가이드
     ├── architecture.md                # 원리 및 플로우 상세 문서
+    ├── otel-deep-dive.md              # OpenTelemetry 심층 가이드
     ├── firewall-setup.md              # 방화벽 설정 가이드
     └── progress-log.md               # 작업일지
 ```
