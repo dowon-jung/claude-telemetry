@@ -23,14 +23,16 @@ services:
       - elasticsearch
 
   otel-collector:
-    image: docker.elastic.co/elastic-agent/elastic-otel-collector:0.9.0
+    image: docker.elastic.co/elastic-agent/elastic-agent:8.16.0
     container_name: otel-collector
+    environment:
+      - ELASTIC_AGENT_OTEL=true
     command: ["--config=/etc/otel-config.yaml"]
     volumes:
       - ./otel-config.yaml:/etc/otel-config.yaml
     ports:
-      - "4327:4317"   # gRPC
-      - "4328:4318"   # HTTP
+      - "4327:4317"
+      - "4328:4318"
     depends_on:
       - elasticsearch
 
