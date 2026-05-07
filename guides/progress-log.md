@@ -97,3 +97,42 @@ OTEL_EXPORTER_OTLP_ENDPOINT = http://192.168.50.170:4328
 4. 대시보드 구성 (사용자별 프롬프트, 토큰/비용)
 5. 팀원 전체 배포
 
+
+---
+
+## 2026-05-07 최종 완료 업데이트
+
+### 🎉 전체 파이프라인 성공
+
+| 항목 | 결과 |
+|---|---|
+| OTEL 데이터 수신 | ✅ |
+| ElasticSearch 저장 | ✅ (logs-generic-default data stream) |
+| Kibana Discover 조회 | ✅ Documents 3개 확인 |
+
+### 최종 확정 스택
+
+| 항목 | 버전/설정 |
+|---|---|
+| ElasticSearch | 8.16.0 |
+| Kibana | 8.16.0 |
+| OTEL Collector | elastic-agent:8.16.0 (EDOT 모드) |
+| Data Stream | logs-generic-default |
+| Kibana Data View | claude-telemetry |
+
+### Kibana에서 조회 가능한 필드
+
+- `Attributes.user.email` — 사용자 이메일
+- `Attributes.event.name` — 이벤트 유형 (user_prompt / api_request)
+- `Attributes.model` — 사용 모델
+- `Attributes.cost_usd` — 비용
+- `Attributes.input_tokens` — 입력 토큰
+- `Attributes.output_tokens` — 출력 토큰
+- `Attributes.session.id` — 세션 ID
+- `@timestamp` — 시간
+
+### 내일 할 일
+
+1. 팀원 환경변수 IP `192.168.50.170`으로 재설정 후 배포
+2. Kibana 대시보드 구성 (사용자별 비용, 모델별 사용량)
+3. Alert 설정 (위험 명령 탐지)
