@@ -6,14 +6,15 @@ Claude Code 위험 키워드 탐지 → 슬랙 알림 스크립트
 """
 
 import json
+import os
 import urllib.request
 from datetime import datetime, timezone, timedelta
 
 # =====================
-# 설정값 (수정 필요)
+# 설정값
 # =====================
 ES_URL = "http://localhost:9201"
-SLACK_WEBHOOK_URL = "YOUR_SLACK_WEBHOOK_URL"  # 실제 URL은 환경변수로 설정
+SLACK_WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL", "")
 CHECK_INTERVAL_MINUTES = 5
 
 DANGEROUS_KEYWORDS = [
@@ -71,6 +72,10 @@ def search_dangerous_prompts():
 # =====================
 def send_slack_alert(hits):
     if not hits:
+        return
+
+    if not SLACK_WEBHOOK_URL:
+        print("오류: SLACK_WEBHOOK_URL 환경변수가 설정되지 않았습니다.")
         return
 
     messages = []
