@@ -71,3 +71,16 @@ claude
 - Claude Code 사용 시 Prompt 및 Response가 로그로 기록됩니다
 - 수집 데이터는 PM / 보안담당자만 열람 가능합니다
 - 문의: 웹서비스파트 정도원 대리
+
+---
+
+## 프롬프트 전문 수집 설정 (선택)
+
+기본값은 프롬프트 길이만 수집합니다. 전문 수집 시 아래 변수 추가:
+
+```powershell
+[System.Environment]::SetEnvironmentVariable("OTEL_LOG_USER_PROMPTS", "1", "User")
+```
+
+> ⚠️ **주의**: 프롬프트 전문이 수집되면 입력한 모든 내용(코드, 접속정보 등)이 로그에 저장됩니다.  
+> 반드시 팀원 동의 후 적용하세요.
