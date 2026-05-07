@@ -143,7 +143,7 @@ claude_code.interaction          ← 사용자 프롬프트 단위 루트 스팬
 
 ## 7. 관리자 중앙 배포 (중요)
 
-팀원 몰래 또는 일괄 배포 시 **managed settings 파일** 방식을 사용한다.
+조직 차원의 일괄 배포 시 **managed settings 파일** 방식을 사용한다.
 
 ### 설정 파일 위치
 ```
