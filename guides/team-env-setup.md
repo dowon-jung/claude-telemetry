@@ -5,7 +5,9 @@
 Claude Code 사용 내역이 수집 서버(PM PC)로 전송됩니다.  
 아래 설정을 완료해야 로그 수집이 시작됩니다.
 
-> ⚠️ **반드시 사내망(유선 이더넷)에 연결된 상태**에서 사용해야 수집됩니다.
+> ⚠️ **본 설정은 업무 보안 감사 목적으로 운영됩니다.**  
+> Claude Code 사용 시 프롬프트 및 응답이 로그로 기록됩니다.  
+> 수집 데이터는 PM / 보안담당자만 열람 가능합니다.
 
 ---
 
@@ -20,13 +22,7 @@ Claude Code 사용 내역이 수집 서버(PM PC)로 전송됩니다.
 
 ## 환경변수 설정 (PowerShell)
 
-### 기존 잘못된 변수 제거
-
-```powershell
-[System.Environment]::SetEnvironmentVariable("ANTHROPIC_OTEL_ENABLED", $null, "User")
-```
-
-### 올바른 변수 설정
+PowerShell 열고 아래 명령어 한번에 붙여넣기:
 
 ```powershell
 [System.Environment]::SetEnvironmentVariable("CLAUDE_CODE_ENABLE_TELEMETRY", "1", "User")
@@ -34,6 +30,7 @@ Claude Code 사용 내역이 수집 서버(PM PC)로 전송됩니다.
 [System.Environment]::SetEnvironmentVariable("OTEL_LOGS_EXPORTER", "otlp", "User")
 [System.Environment]::SetEnvironmentVariable("OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf", "User")
 [System.Environment]::SetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT", "http://192.168.50.170:4328", "User")
+[System.Environment]::SetEnvironmentVariable("OTEL_LOG_USER_PROMPTS", "1", "User")
 ```
 
 ---
@@ -45,13 +42,17 @@ PowerShell **새 창** 열고:
 ```powershell
 echo $env:CLAUDE_CODE_ENABLE_TELEMETRY
 echo $env:OTEL_EXPORTER_OTLP_ENDPOINT
+echo $env:OTEL_LOG_USER_PROMPTS
 ```
 
 결과:
 ```
 1
 http://192.168.50.170:4328
+1
 ```
+
+세 값 모두 출력되면 완료입니다.
 
 ---
 
@@ -65,22 +66,19 @@ claude
 
 ---
 
-## 주의사항
+## 수집되는 정보
 
-- 본 설정은 **업무 보안 감사 목적**으로 운영됩니다
-- Claude Code 사용 시 Prompt 및 Response가 로그로 기록됩니다
-- 수집 데이터는 PM / 보안담당자만 열람 가능합니다
-- 문의: 웹서비스파트 정도원 대리
+| 항목 | 내용 |
+|---|---|
+| 프롬프트 전문 | 입력한 모든 내용 |
+| 모델 | 사용 모델명 |
+| 토큰 / 비용 | 사용량 및 비용 |
+| 세션 ID | 세션 식별자 |
+| 이메일 | 사용자 계정 |
+| 시간 | 요청 시각 |
 
 ---
 
-## 프롬프트 전문 수집 설정 (선택)
+## 문의
 
-기본값은 프롬프트 길이만 수집합니다. 전문 수집 시 아래 변수 추가:
-
-```powershell
-[System.Environment]::SetEnvironmentVariable("OTEL_LOG_USER_PROMPTS", "1", "User")
-```
-
-> ⚠️ **주의**: 프롬프트 전문이 수집되면 입력한 모든 내용(코드, 접속정보 등)이 로그에 저장됩니다.  
-> 반드시 팀원 동의 후 적용하세요.
+설정 관련 문의: 웹서비스파트 정도원 대리
