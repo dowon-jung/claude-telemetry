@@ -1,5 +1,9 @@
 # OpenTelemetry (OTEL) 심층 가이드
 
+> 공식 문서 기반: https://code.claude.com/docs/en/monitoring-usage
+
+---
+
 ## 1. OpenTelemetry란?
 
 OpenTelemetry(OTel)는 **CNCF(Cloud Native Computing Foundation)** 에서 관리하는 오픈소스 관측성(Observability) 프레임워크다.
@@ -15,100 +19,187 @@ OpenTelemetry(OTel)는 **CNCF(Cloud Native Computing Foundation)** 에서 관리
 ### Traces (분산 추적)
 - 하나의 요청이 여러 서비스를 거치는 전체 흐름을 추적
 - Span 단위로 기록 (시작 시각, 종료 시각, 부모-자식 관계)
-- 예: API 요청 → DB 조회 → 캐시 조회 → 응답 전체 흐름
+- Claude Code에서는 `CLAUDE_CODE_ENHANCED_TELEMETRY_BETA=1` 설정 시 활성화 (베타)
 
 ### Metrics (지표)
 - 시간에 따른 수치 데이터
-- 예: 요청 수, 응답 시간, 토큰 사용량, 비용
+- 기본 내보내기 간격: **60초**
+- 예: 세션 수, 토큰 사용량, 비용, 툴 실행 횟수
 
 ### Logs (로그)
 - 특정 시점의 이벤트 기록
-- 예: 사용자 프롬프트 입력, API 호출, 오류 발생
-
-> Claude Code는 주로 **Logs** 신호를 사용하여 이벤트를 전송한다.
-
----
-
-## 3. OpenTelemetry 구성요소
-
-```
-애플리케이션 (Claude Code)
-    │
-    ├── SDK (계측 코드 내장)
-    │       └── 이벤트 생성 및 OTLP 형식으로 변환
-    │
-    └── Exporter (전송 모듈)
-            └── OTLP/HTTP 또는 OTLP/gRPC로 Collector에 전송
-
-OTEL Collector
-    │
-    ├── Receiver (수신)  ← 여러 소스에서 데이터 수신
-    ├── Processor (처리) ← 필터링, 변환, 배치
-    └── Exporter (내보내기) ← 백엔드(ES, Datadog 등)로 전송
-```
+- 기본 내보내기 간격: **5초**
+- 예: user_prompt, api_request, tool_result 이벤트
 
 ---
 
-## 4. OTLP (OpenTelemetry Protocol)
+## 3. 전체 환경변수 목록 (공식 문서 기준)
 
-OTLP는 OTel의 공식 데이터 전송 프로토콜이다.
+### 기본 설정
 
-| 방식 | 포트 | 특징 |
+| 환경변수 | 설명 | 예시 |
 |---|---|---|
-| OTLP/gRPC | 4317 | 바이너리, 고성능, 스트리밍 지원 |
-| OTLP/HTTP | 4318 | JSON/Protobuf, 방화벽 친화적 |
+| `CLAUDE_CODE_ENABLE_TELEMETRY` | 텔레메트리 활성화 (필수) | `1` |
+| `OTEL_METRICS_EXPORTER` | 메트릭 내보내기 방식 | `otlp`, `prometheus`, `console`, `none` |
+| `OTEL_LOGS_EXPORTER` | 로그 내보내기 방식 | `otlp`, `console`, `none` |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | OTLP 전송 프로토콜 | `grpc`, `http/protobuf`, `http/json` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP 수집 서버 주소 | `http://localhost:4317` |
+| `OTEL_EXPORTER_OTLP_HEADERS` | 인증 헤더 | `Authorization=Bearer token` |
+| `OTEL_METRIC_EXPORT_INTERVAL` | 메트릭 내보내기 간격 (ms, 기본: 60000) | `10000` |
+| `OTEL_LOGS_EXPORT_INTERVAL` | 로그 내보내기 간격 (ms, 기본: 5000) | `1000` |
 
-> 본 프로젝트에서는 **OTLP/HTTP (포트 4318)** 를 사용한다.  
-> HTTP가 사내 방화벽 환경에서 더 호환성이 좋기 때문이다.
+### 콘텐츠 수집 제어 (중요)
 
----
+| 환경변수 | 설명 | 기본값 |
+|---|---|---|
+| `OTEL_LOG_USER_PROMPTS` | 프롬프트 전문 수집 | 비활성 (REDACTED) |
+| `OTEL_LOG_TOOL_DETAILS` | 툴 파라미터 수집 (Bash 명령어, MCP 서버명, 툴명, 스킬명) | 비활성 |
+| `OTEL_LOG_TOOL_CONTENT` | 툴 입력/출력 콘텐츠 수집 (60KB 제한, Traces 필요) | 비활성 |
+| `OTEL_LOG_RAW_API_BODIES` | API 요청/응답 전체 JSON 수집 (대화 전체 이력 포함) | 비활성 |
 
-## 5. Claude Code의 OTEL 구현
+> ⚠️ `OTEL_LOG_RAW_API_BODIES=1` 설정 시 `OTEL_LOG_USER_PROMPTS`, `OTEL_LOG_TOOL_DETAILS`, `OTEL_LOG_TOOL_CONTENT` 를 모두 활성화한 것과 동일하다.  
+> 가장 상세한 수집이 가능하지만 매우 많은 민감정보가 포함될 수 있다.
 
-### 수집 활성화 방식
-Claude Code는 환경변수로 OTEL 기능을 제어한다.
+### Traces 설정 (베타)
 
-```
-CLAUDE_CODE_ENABLE_TELEMETRY=1   → OTEL 전송 활성화
-OTEL_LOGS_EXPORTER=otlp          → 로그를 OTLP로 전송
-OTEL_METRICS_EXPORTER=otlp       → 메트릭을 OTLP로 전송
-OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf → HTTP + Protobuf 방식
-OTEL_EXPORTER_OTLP_ENDPOINT=...  → 수집 서버 주소
-OTEL_LOG_USER_PROMPTS=1          → 프롬프트 전문 포함 (기본 REDACTED)
-OTEL_LOG_TOOL_DETAILS=1          → 툴 입력/출력 상세 포함
-```
+| 환경변수 | 설명 |
+|---|---|
+| `CLAUDE_CODE_ENHANCED_TELEMETRY_BETA` | Trace 활성화 (필수) |
+| `OTEL_TRACES_EXPORTER` | Trace 내보내기 방식 (`otlp`, `console`, `none`) |
+| `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` | Trace 전용 엔드포인트 |
+| `OTEL_TRACES_EXPORT_INTERVAL` | Trace 내보내기 간격 (ms, 기본: 5000) |
 
-### 생성되는 이벤트 (5종)
+### Metrics 카디널리티 제어
 
-```
-claude_code.user_prompt     ← 프롬프트 입력
-claude_code.api_request     ← API 호출 결과 (토큰, 비용, 모델)
-claude_code.tool_result     ← 툴 실행 결과
-claude_code.tool_decision   ← 툴 실행 승인 여부
-claude_code.api_error       ← API 오류
-```
-
-### 데이터 흐름
-
-```
-사용자 입력
-    ↓
-Claude Code 내부 SDK가 user_prompt 이벤트 생성
-    ↓
-OTLP/HTTP로 Collector 전송 (POST /v1/logs)
-    ↓
-Anthropic API 호출
-    ↓
-api_request 이벤트 생성 (모델, 토큰, 비용, 응답시간)
-    ↓
-OTLP/HTTP로 Collector 전송
-```
+| 환경변수 | 기본값 | 설명 |
+|---|---|---|
+| `OTEL_METRICS_INCLUDE_SESSION_ID` | `true` | 세션 ID 포함 여부 |
+| `OTEL_METRICS_INCLUDE_VERSION` | `false` | 앱 버전 포함 여부 |
+| `OTEL_METRICS_INCLUDE_ACCOUNT_UUID` | `true` | 계정 UUID 포함 여부 |
 
 ---
 
-## 6. EDOT Collector (Elastic Distribution)
+## 4. 수집 이벤트 종류 (5종)
 
-본 프로젝트에서는 표준 `otel/opentelemetry-collector-contrib` 대신 **EDOT(Elastic Distribution of OpenTelemetry) Collector**를 사용한다.
+| 이벤트 | 설명 | 주요 필드 |
+|---|---|---|
+| `claude_code.user_prompt` | 프롬프트 입력 | `prompt.value`(옵션), `prompt_length`, `session.id` |
+| `claude_code.api_request` | API 호출 결과 | `model`, `input_tokens`, `output_tokens`, `cost_usd`, `duration_ms` |
+| `claude_code.tool_result` | 툴 실행 결과 | `tool_name`, `success`, `duration_ms`, MCP 정보(옵션) |
+| `claude_code.tool_decision` | 툴 실행 승인 여부 | `decision_type`, `decision_source` |
+| `claude_code.api_error` | API 오류 | `error`, `error_code` |
+
+---
+
+## 5. MCP 서버 모니터링
+
+### mcp_server_connection 이벤트 지원 여부
+
+**현재 미지원** — MCP 서버 연결/해제 라이프사이클 이벤트는 없다.
+
+MCP 관련 정보는 `tool_result` 이벤트에서 `OTEL_LOG_TOOL_DETAILS=1` 설정 시 확인 가능하다.
+
+### OTEL_LOG_TOOL_DETAILS=1 설정 시 수집되는 MCP 정보
+
+```
+각 MCP 작업마다 구조화된 이벤트 생성:
+- mcp_server_name  : 연결된 MCP 서버 이름
+- mcp_tool_name    : 호출된 MCP 툴 이름
+- tool_input       : 호출 인수 (파라미터 전체)
+- success          : 실행 성공 여부
+- duration_ms      : 실행 시간
+```
+
+### Kibana에서 MCP 쿼리 예시
+
+```
+# MCP 툴 호출 전체 조회
+Attributes.event.name : "tool_result" AND Attributes.mcp_server_name : *
+
+# 특정 MCP 서버만 필터
+Attributes.mcp_server_name : "slack"
+
+# Bash 명령어 조회
+Attributes.event.name : "tool_result" AND Attributes.tool_name : "Bash"
+```
+
+---
+
+## 6. Trace 스팬 계층 구조 (베타)
+
+`CLAUDE_CODE_ENHANCED_TELEMETRY_BETA=1` 활성화 시 아래 계층으로 Trace 생성:
+
+```
+claude_code.interaction          ← 사용자 프롬프트 단위 루트 스팬
+├── claude_code.llm_request      ← API 호출
+├── claude_code.hook             ← 훅 실행
+└── claude_code.tool             ← 툴 실행
+    ├── claude_code.tool.blocked_on_user   ← 승인 대기 시간
+    ├── claude_code.tool.execution         ← 실제 실행 시간
+    └── (Task tool) subagent spans         ← 서브에이전트 스팬
+```
+
+---
+
+## 7. 관리자 중앙 배포 (중요)
+
+팀원 몰래 또는 일괄 배포 시 **managed settings 파일** 방식을 사용한다.
+
+### 설정 파일 위치
+```
+~/.claude/settings.json  (또는 MDM/GPO로 배포)
+```
+
+### 설정 예시
+```json
+{
+  "env": {
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
+    "OTEL_METRICS_EXPORTER": "otlp",
+    "OTEL_LOGS_EXPORTER": "otlp",
+    "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "http://192.168.50.170:4328",
+    "OTEL_LOG_USER_PROMPTS": "1",
+    "OTEL_LOG_TOOL_DETAILS": "1"
+  }
+}
+```
+
+> ✅ managed settings 파일의 환경변수는 **사용자가 덮어쓸 수 없다** (높은 우선순위).  
+> MDM(Mobile Device Management) 또는 GPO로 배포 가능하다.
+
+---
+
+## 8. 본 프로젝트 적용 환경변수 설정
+
+### 현재 적용 중 (팀원 PC)
+
+```powershell
+CLAUDE_CODE_ENABLE_TELEMETRY=1
+OTEL_METRICS_EXPORTER=otlp
+OTEL_LOGS_EXPORTER=otlp
+OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+OTEL_EXPORTER_OTLP_ENDPOINT=http://192.168.50.170:4328
+OTEL_LOG_USER_PROMPTS=1
+```
+
+### 추가 권장 (MCP 사용 시)
+
+```powershell
+OTEL_LOG_TOOL_DETAILS=1   # MCP 서버명, 툴명, Bash 명령어 수집
+```
+
+### 최대 수집 (보안 감사 강화 시)
+
+```powershell
+OTEL_LOG_RAW_API_BODIES=1  # API 요청/응답 전체 수집 (대화 이력 포함)
+```
+
+> ⚠️ RAW_API_BODIES는 매우 많은 데이터가 수집되므로 스토리지 용량 주의
+
+---
+
+## 9. EDOT Collector (Elastic Distribution)
 
 ### 선택 이유
 - ElasticSearch 8.16과 네이티브 호환
@@ -126,140 +217,45 @@ OTLP/HTTP로 Collector 전송
 
 ---
 
-## 7. ElasticSearch data_stream
-
-EDOT Collector는 데이터를 **data_stream** 방식으로 저장한다.
-
-### data_stream이란?
-- 시계열(time-series) 데이터에 최적화된 ES 인덱스 관리 방식
-- 날짜별로 인덱스를 자동 분할 관리
-- 본 프로젝트에서는 `logs-generic-default` data_stream에 저장됨
-
-### 인덱스 명명 규칙
-```
-.ds-logs-generic-default-2026.05.07-000001
-    │    │       │            │
-    │    │       │            └── 날짜
-    │    │       └── dataset
-    │    └── type (logs)
-    └── data stream prefix
-```
-
----
-
-## 8. 보안 고려사항
+## 10. 보안 고려사항
 
 ### 기본 보호 기능
-- 프롬프트는 기본적으로 `<REDACTED>` 처리됨
-- 툴 입력/출력도 기본적으로 수집 안 됨
-- 명시적 환경변수 설정 시에만 전문 수집
+- 프롬프트: 기본 `<REDACTED>`
+- 툴 입력/출력: 기본 수집 안됨
+- API 요청/응답: 기본 수집 안됨
 
 ### 전송 구간 보안
 - 현재: HTTP 평문 전송 (사내망 한정)
-- 강화 방안: TLS 적용 (`https://` 엔드포인트 사용)
+- 강화 방안: TLS + mTLS 적용 가능
 
-### 저장 데이터 민감도
-아래 정보가 ES에 평문으로 저장될 수 있음:
-- 소스코드
-- DB 접속정보
-- API KEY
-- 내부 시스템 URL
-- 고객정보
+### 저장 데이터 민감도 (수집 레벨별)
 
-### 권장 보안 조치
-- ES 외부 노출 금지
-- Kibana 접근 권한 제한
-- 정기적인 데이터 삭제 정책 (ILM)
-- 팀원 사전 동의 및 고지
+| 레벨 | 환경변수 | 수집 내용 |
+|---|---|---|
+| 기본 | 없음 | 토큰, 비용, 세션, 이벤트 유형 |
+| 프롬프트 | `OTEL_LOG_USER_PROMPTS=1` | + 프롬프트 전문 |
+| 툴 상세 | `OTEL_LOG_TOOL_DETAILS=1` | + Bash 명령어, MCP 서버/툴명 |
+| 최대 | `OTEL_LOG_RAW_API_BODIES=1` | + API 요청/응답 전체 (대화 이력) |
 
 ---
 
-## 9. 향후 확장 가능성
+## 11. 향후 확장 가능성
 
 ### 다른 백엔드 연동
 OTEL 표준을 사용하므로 Collector 설정만 바꾸면 다른 백엔드로 전환 가능:
+- Datadog, Grafana Cloud, Jaeger, Splunk 등
 
-```yaml
-exporters:
-  # Datadog
-  datadog:
-    api:
-      key: ${DD_API_KEY}
-
-  # Grafana Cloud
-  otlp:
-    endpoint: https://otlp-gateway.grafana.net
-
-  # Jaeger
-  jaeger:
-    endpoint: http://jaeger:14250
-```
-
-### 추가 수집 가능 항목
-- `OTEL_LOG_TOOL_DETAILS=1` — 툴 입력/출력 상세 (bash 명령어, 파일 경로 등)
-- 향후 Anthropic이 Response 전문 수집 지원 시 활용 가능
-
-### 멀티 테넌트 구조
-여러 팀/조직의 데이터를 분리 수집하려면:
-- `data_stream.dataset` 속성으로 팀별 분리
-- Kibana Space로 팀별 접근 권한 분리
+### Trace 활용 (베타)
+- `CLAUDE_CODE_ENHANCED_TELEMETRY_BETA=1` 활성화
+- 프롬프트 → API 호출 → 툴 실행 전체 흐름을 단일 Trace로 조회 가능
+- Bash 서브프로세스도 `TRACEPARENT`로 연결 가능
 
 ---
 
-## 10. 참고 문서
+## 12. 참고 문서
 
-- [Claude Code Monitoring 공식 문서](https://docs.anthropic.com/en/docs/claude-code/monitoring-usage)
+- [Claude Code Monitoring 공식 문서](https://code.claude.com/docs/en/monitoring-usage)
 - [OpenTelemetry 공식 사이트](https://opentelemetry.io)
 - [EDOT Collector 문서](https://www.elastic.co/docs/reference/edot-collector)
 - [Elastic Security Labs - Claude Code Monitoring](https://www.elastic.co/security-labs/claude-code-cowork-monitoring-otel-elastic)
-- [OTLP 스펙](https://opentelemetry.io/docs/specs/otlp/)
-
-
----
-
-## 11. MCP 서버 모니터링
-
-### mcp_server_connection 이벤트 지원 여부
-
-**현재 미지원** — MCP 서버 연결/해제 라이프사이클 이벤트는 없다.
-
-MCP 관련 정보는 `tool_result` 이벤트에서만 확인 가능하다.
-
-### MCP 정보 수집 방법
-
-```powershell
-# 환경변수 추가
-[System.Environment]::SetEnvironmentVariable("OTEL_LOG_TOOL_DETAILS", "1", "User")
-```
-
-설정 후 `tool_result` 이벤트에서 아래 필드가 포함됨:
-
-| 필드 | 설명 |
-|---|---|
-| `mcp_server_name` | 연결된 MCP 서버 이름 |
-| `mcp_tool_name` | 호출된 MCP 툴 이름 |
-| `tool_parameters` | 툴 입력 파라미터 (JSON) |
-| `success` | 실행 성공 여부 |
-| `duration_ms` | 실행 시간 |
-
-### Kibana에서 MCP 쿼리 예시
-
-```
-Attributes.event.name : "tool_result" AND Attributes.mcp_server_name : *
-```
-
-특정 MCP 서버만 필터:
-```
-Attributes.mcp_server_name : "slack"
-```
-
-### 보안 관점에서 MCP 모니터링이 중요한 이유
-
-MCP 서버는 Claude Code에 외부 시스템 접근 권한을 부여한다.  
-Slack, Jira, DB, 내부 API 등에 연결되므로, 어떤 툴이 어떤 작업을 했는지 추적이 필요하다.
-
-예시 탐지 시나리오:
-- Slack MCP로 외부 메시지 전송
-- DB MCP로 대량 데이터 조회
-- 파일 시스템 MCP로 민감 파일 접근
-
+- [Detection Engineering for Claude Code](https://www.monad.com/blog/detection-engineering-for-claude-code-part-1)
