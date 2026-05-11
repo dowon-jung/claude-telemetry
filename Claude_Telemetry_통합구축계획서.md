@@ -11,7 +11,7 @@
 3. [전체 아키텍처](#3-전체-아키텍처)
 4. [수집 데이터](#4-수집-데이터)
 5. [Docker Compose 구성](#5-docker-compose-구성)
-6. [팀원 환경변수 설정](#6-팀원-환경변수-설정)
+6. [환경변수 설정](#6-환경변수-설정)
 7. [Kibana 조회 및 대시보드](#7-kibana-조회-및-대시보드)
 8. [위험 명령 Alert](#8-위험-명령-alert)
 9. [보관 정책](#9-보관-정책)
@@ -206,9 +206,73 @@ service:
 
 ---
 
-## 6. 팀원 환경변수 설정
+## 6. 환경변수 설정
 
-### 6.1 Windows PowerShell 설정 명령
+> **요약:** 관리자가 Managed Settings로 중앙 배포하면 팀원 개인 설정이 불필요하다.
+> 개인 설정 방식(6.2)은 Managed Settings 배포 전 임시 방법이거나, 관리자 설정 없이 개인이 직접 활성화할 때 사용한다.
+
+### 6.1 관리자 중앙 배포 (권장)
+
+공식 문서 기준으로 관리자가 Managed Settings를 배포하면 팀원이 아무것도 설정하지 않아도 자동 적용된다.
+설정한 환경변수는 **팀원이 덮어쓸 수 없다** (high precedence).
+
+참고: https://code.claude.com/docs/en/monitoring-usage#administrator-configuration
+
+#### 방법 A — Server-managed settings (Claude.ai 콘솔, MDM 없을 때 권장)
+
+Claude Team / Enterprise 플랜 필요. Claude Code 2.1.38 이상 필요.
+
+1. claude.ai → **Admin Settings > Claude Code > Managed settings**
+2. 아래 JSON 입력 후 저장
+3. 팀원이 다음 Claude Code 실행 시 자동 수신
+
+```json
+{
+  "env": {
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
+    "OTEL_METRICS_EXPORTER": "otlp",
+    "OTEL_LOGS_EXPORTER": "otlp",
+    "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "http://192.168.50.170:4328",
+    "OTEL_LOG_USER_PROMPTS": "1",
+    "OTEL_LOG_TOOL_DETAILS": "1"
+  }
+}
+```
+
+#### 방법 B — Endpoint-managed settings (MDM / GPO 있을 때)
+
+IT팀이 MDM(또는 Windows GPO)으로 아래 파일을 각 PC에 배포한다.
+
+**파일 경로 (Windows):**
+```
+%APPDATA%\Claude\managed-settings.json
+```
+
+**파일 내용:**
+```json
+{
+  "env": {
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
+    "OTEL_METRICS_EXPORTER": "otlp",
+    "OTEL_LOGS_EXPORTER": "otlp",
+    "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "http://192.168.50.170:4328",
+    "OTEL_LOG_USER_PROMPTS": "1",
+    "OTEL_LOG_TOOL_DETAILS": "1"
+  }
+}
+```
+
+> 방법 A와 B 중 한일네트웍스 현재 환경에서는 **방법 A (Server-managed settings)** 가 IT팀 도움 없이 PM이 직접 처리할 수 있어 더 간편하다.
+
+---
+
+### 6.2 팀원 개인 설정 (임시 방법 / 관리자 배포 전)
+
+> Managed Settings 배포가 완료되면 아래 개인 설정은 불필요하다. 현재는 임시 방법으로 운영 중.
+
+#### Windows PowerShell 설정 명령
 
 새 PowerShell을 열고 아래 명령어를 실행한다.
 
@@ -222,7 +286,7 @@ service:
 [System.Environment]::SetEnvironmentVariable("OTEL_LOG_TOOL_DETAILS", "1", "User")
 ```
 
-### 6.2 설정 확인 방법
+### 6.3 설정 확인 방법
 
 설정 후 **새 PowerShell**을 열고 아래 명령으로 확인한다.
 
@@ -235,7 +299,7 @@ echo $env:OTEL_LOG_USER_PROMPTS           # → 1
 
 4개 값이 모두 출력되면 설정 완료. 이후 `claude` 실행 시 자동으로 PM PC로 수집된다.
 
-### 6.3 IntelliJ / PyCharm 터미널 주의사항
+### 6.4 IntelliJ / PyCharm 터미널 주의사항
 
 IDE 내장 터미널은 시스템 환경변수가 적용되지 않을 수 있다. IDE 터미널에서 직접 아래와 같이 설정한다.
 
