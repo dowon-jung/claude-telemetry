@@ -24,7 +24,10 @@ Claude Code 사용 내역이 수집 서버(PM PC)로 전송됩니다.
 
 ### 관리자 중앙 배포란?
 
-Claude Team 플랜의 경우 PM이 claude.ai 어드민 콘솔에서 OTEL 환경변수를 조직 전체에 일괄 적용할 수 있습니다.  
+Claude Team 플랜의 경우 PM이 아래 경로에서 OTEL 환경변수를 조직 전체에 일괄 적용할 수 있습니다.
+
+> claude.ai → 좌측 메뉴 → **Claude Code** → 스크롤 내려서 **관리형 설정 (settings.json)** → **[관리]** 버튼
+
 적용되면 팀원이 Claude Code 실행 시 자동으로 수집이 시작되며, 팀원이 설정을 임의로 끌 수 없습니다.
 
 현재 적용 여부는 정도원 대리에게 문의하세요.

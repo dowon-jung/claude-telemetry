@@ -222,9 +222,10 @@ service:
 
 Claude Team / Enterprise 플랜 필요. Claude Code 2.1.38 이상 필요.
 
-1. claude.ai → **Admin Settings > Claude Code > Managed settings**
-2. 아래 JSON 입력 후 저장
-3. 팀원이 다음 Claude Code 실행 시 자동 수신
+1. claude.ai → 좌측 메뉴 → **Claude Code**
+2. 스크롤 내려서 **관리형 설정 (settings.json)** → **[관리]** 버튼 클릭
+3. 아래 JSON 입력 후 저장
+4. 팀원이 다음 Claude Code 실행 시 자동 수신
 
 ```json
 {
